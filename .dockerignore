@@ -1,0 +1,16 @@
+# Versioning and metadata
+.git
+.gitignore
+.dockerignore
+
+# Build artifacts and dependencies
+dist
+node_modules
+coverage
+
+# Environment and configuration files (often handled by environment variables or secrets in production)
+.env
+.editorconfig
+
+# Optional: exclude test-related files if not running tests within the container
+test
