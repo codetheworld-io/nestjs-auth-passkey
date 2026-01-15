@@ -5,7 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BaseEntity,
+  OneToMany,
 } from 'typeorm';
+import { PasskeyCredential } from '../passkeys/passkey-credential.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -26,4 +28,7 @@ export class User extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => PasskeyCredential, (credential) => credential.user)
+  passkeyCredentials: PasskeyCredential[];
 }

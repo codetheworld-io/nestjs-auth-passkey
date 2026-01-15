@@ -18,6 +18,13 @@ export class AuthController {
   @Post('signin')
   @UseGuards(AuthGuard('local'))
   signin(@Req() req: Request) {
-    return this.authService.login(req.user as User);
+    const user = req.user as User;
+
+    return this.authService.issueJwt({
+      sub: user.id,
+      username: user.username,
+      authLevel: 'password',
+      passkeyVerified: false,
+    });
   }
 }

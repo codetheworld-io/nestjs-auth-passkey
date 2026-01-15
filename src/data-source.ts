@@ -1,5 +1,3 @@
-process.loadEnvFile('.env');
-
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 

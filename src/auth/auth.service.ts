@@ -2,7 +2,13 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { PasswordService } from './password.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/user.entity';
+
+export interface JwtPayload {
+  sub: string;
+  username: string;
+  authLevel: 'password' | 'full';
+  passkeyVerified?: boolean;
+}
 
 @Injectable()
 export class AuthService {
@@ -23,12 +29,7 @@ export class AuthService {
     return this.userService.create(username, passwordHash);
   }
 
-  login(user: User) {
-    const payload = {
-      sub: user.id,
-      username: user.username,
-    };
-
+  issueJwt(payload: JwtPayload) {
     return {
       accessToken: this.jwtService.sign(payload),
     };

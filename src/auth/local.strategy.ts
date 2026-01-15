@@ -3,6 +3,15 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { UsersService } from '../users/users.service';
 import { PasswordService } from './password.service';
+import { User as UserEntity } from '../users/user.entity';
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    // eslint-disable-next-line
+    interface User extends UserEntity {}
+  }
+}
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {

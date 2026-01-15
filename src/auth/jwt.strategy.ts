@@ -1,5 +1,14 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
+import { JwtPayload } from './auth.service';
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    // eslint-disable-next-line
+    interface User extends JwtPayload {}
+  }
+}
 
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
@@ -9,10 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: { sub: string; username: string; password: string }) {
-    return {
-      userId: payload.sub,
-      username: payload.username,
-    };
+  validate(payload: JwtPayload) {
+    return payload;
   }
 }

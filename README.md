@@ -1,98 +1,242 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS Passkey Authentication — Password + JWT + WebAuthn (Production-Ready)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This repository demonstrates how to build a **production-ready authentication system** using:
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- NestJS
+- PostgreSQL
+- Docker Compose
+- Passport.js (Local + JWT strategies)
+- WebAuthn (Passkeys) as second-factor authentication
 
-## Description
+The project is built as a **two-step authentication model**:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+1. Users sign in with **username and password**
+2. Users verify with **passkeys (WebAuthn)** to upgrade their JWT and access sensitive routes
 
-## Project setup
+This mirrors how passkeys are realistically introduced in real-world systems — **without breaking existing login flows
+**.
 
-```bash
-$ npm install
+---
+
+## Medium Article Series
+
+This repository accompanies the following articles:
+
+### Part 1 — Local Authentication with JWT
+
+> Building a production-ready authentication system with NestJS, PostgreSQL, JWT, and Passport.js
+
+Covers:
+
+- Project setup with NestJS and Docker Compose
+- PostgreSQL integration with TypeORM
+- User entity design
+- Password hashing
+- Passport Local Strategy
+- JWT authentication and route guards
+
+### Part 2 — Adding Passkeys with WebAuthn
+
+> Integrating passkeys (WebAuthn) into an existing NestJS authentication system
+
+Covers:
+
+- Passkey architecture in production systems
+- WebAuthn data modeling
+- Passkey registration
+- Passkey authentication
+- JWT upgrade (step-up authentication)
+- Cache-based challenge handling
+
+---
+
+## Architecture Overview
+
+```
+[ Browser ]
+│
+├─ Username + Password ──▶ /auth/login
+│ └─ JWT (authLevel=password)
+│
+├─ Passkey Register ─────▶ /passkeys/register/*
+│
+└─ Passkey Verify ───────▶ /passkeys/authenticate/*
+└─ JWT (authLevel=full)
 ```
 
-## Compile and run the project
+## Authorization is enforced using JWT claims and NestJS guards:
+
+- `JwtAuthGuard` → requires login
+- `FullAuthGuard` → requires passkey verification
+
+No sessions are used. The system is fully stateless and horizontally scalable.
+
+---
+
+## Tech Stack
+
+Backend:
+
+- NestJS
+- TypeORM
+- PostgreSQL
+- Passport.js
+- JWT
+- @simplewebauthn/server
+- cache-manager (Redis-ready)
+
+Frontend (demo only):
+
+- Plain HTML
+- Vanilla JavaScript
+- Native WebAuthn APIs
+
+Infrastructure:
+
+- Docker Compose
+- PostgreSQL container
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone https://github.com/codetheworld-io/nestjs-auth-passkey.git
+cd nestjs-auth-passkey
 ```
 
-## Run tests
+### 2. Install Dependencies
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```
+npm ci
 ```
 
-## Deployment
+### 3. Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Create `.env`:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```
+DB_HOST=db
+DB_PORT=5432
+DB_USER=auth_user
+DB_PASSWORD=auth_password
+DB_NAME=auth_db
+JWT_SECRET=thel@stFlyD0g
+RP_NAME="NestJS Passkey Demo"
+RP_ID=localhost
+RP_ORIGIN=http://localhost:3000
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+> In production, RP_ID must match your domain exactly and HTTPS is required.
 
-## Resources
+### 4. Start Services with Docker
 
-Check out a few resources that may come in handy when working with NestJS:
+```
+docker compose up -d
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+PostgreSQL will be available inside the Docker network as `db`.
 
-## Support
+### 5. Run Database Migrations
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+docker compose exec api npm run migration:generate
+docker compose exec api npm run migration:run
+```
 
-## Stay in touch
+### 6. Start the API Server
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+API will be available at: http://localhost:3000
 
-## License
+## Frontend Demo
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+A very simple frontend is included for demonstration: `public/index.html`
+
+It supports:
+
+- Signup
+- Signin
+- Passkey registration
+- Passkey authentication
+- Calling protected routes
+
+To use it: http://localhost:3000
+
+This frontend is intentionally framework-free to clearly show how WebAuthn works with raw browser APIs.
+
+## API Endpoints Overview
+
+### Authentication
+
+| Method | Endpoint     | Description          |
+|--------|--------------|----------------------|
+| POST   | /auth/signup | Create user account  |
+| POST   | /auth/login  | Password login → JWT |
+
+### Passkeys
+
+| Method | Endpoint                       | Description                     |
+|--------|--------------------------------|---------------------------------|
+| GET    | /passkeys/register/options     | Generate registration challenge |
+| POST   | /passkeys/register/verify      | Verify & store credential       |
+| GET    | /passkeys/authenticate/options | Generate auth challenge         |
+| POST   | /passkeys/authenticate/verify  | Verify & upgrade JWT            |
+
+### Protected Routes
+
+| Guard         | Access Level     |
+|---------------|------------------|
+| JwtAuthGuard  | Logged-in users  |
+| FullAuthGuard | Passkey verified |
+
+---
+
+## Security Design Notes
+
+This project demonstrates:
+
+- Password hashing with bcrypt
+- Challenge-based WebAuthn verification
+- Signature counter enforcement
+- Origin and RP ID validation
+- Stateless JWT-based authorization
+
+It does not include:
+
+- Refresh token rotation
+- Account recovery flows
+- Device management UI
+- Brute-force protection
+
+These are intentionally excluded to keep the example focused.
+
+---
+
+## Extending This Project
+
+Recommended next steps:
+
+- Add Redis for distributed cache
+- Implement refresh token rotation
+- Add passkey device management APIs
+- Enforce passkey on sensitive routes only
+- Support multiple origins behind proxies
+
+This codebase is structured to support all of the above without architectural changes.
+
+---
+
+## WebAuthn Requirements
+
+Passkeys require:
+
+- HTTPS (except for localhost)
+- RP ID matching the domain
+- Stable origins (no IP addresses in prod)
+
+If deploying behind Nginx or cloud load balancers, ensure:
+
+- `X-Forwarded-Proto` headers are set
+- TLS terminates before NestJS

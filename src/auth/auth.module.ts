@@ -7,18 +7,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import { LocalStrategy } from './local.strategy';
-import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 
 @Module({
-  imports: [
-    PassportModule,
-    TypeOrmModule.forFeature([User]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '15m' },
-    }),
-  ],
+  imports: [PassportModule, TypeOrmModule.forFeature([User])],
   providers: [
     UsersService,
     PasswordService,
